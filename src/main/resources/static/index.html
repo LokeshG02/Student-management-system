@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Auth Console — login_signup</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+
+</head>
+<body>
+
+
+<div class="wrap">
+  <header class="topbar">
+    <div></div>
+    <div class="target" id="targetUrl">→ http://localhost:8080</div>
+  </header>
+
+  <div class="particles">
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+
+  <div class="floating-icons">
+
+    <span class="icon book">📘</span>
+
+    <span class="icon cap">🎓</span>
+
+    <span class="icon pencil">✏️</span>
+
+    <span class="icon notebook">📖</span>
+
+    <span class="icon ruler">📐</span>
+
+    <span class="icon bulb">💡</span>
+
+  </div>
+
+  <div class="page-title">
+    <h1>Teacher Login Portal</h1>
+    <p>Student Management System</p>
+  </div>
+  <div class="brand">
+    <span class="dot"></span>
+    <span>auth<strong>console</strong></span>
+  </div>
+
+  <main class="grid">
+    <section class="panel auth-panel">
+      <!--        <div class="brand">-->
+      <!--          <span class="dot"></span>-->
+      <!--          <span>auth<strong>console</strong></span>-->
+      <!--        </div>-->
+      <div class="tabs">
+        <button class="tab active" data-tab="login">Log in</button>
+        <button class="tab" data-tab="signup">Sign up</button>
+      </div>
+
+      <form id="loginForm" class="form active" novalidate>
+        <div class="banner" id="loginBanner"></div>
+
+        <label>Email
+          <input type="email" name="email" required>
+          <span class="field-error" data-for="email"></span>
+        </label>
+        <label>Password
+          <input type="password" name="password" required>
+          <span class="field-error" data-for="password"></span>
+        </label>
+        <button type="submit" class="submit">Log in</button>
+      </form>
+
+      <form id="signupForm" class="form" novalidate>
+        <div class="banner" id="signupBanner"></div>
+
+        <label>Name
+          <input type="text" name="name" required>
+          <span class="field-error" data-for="name"></span>
+        </label>
+        <label>Email
+          <input type="email" name="email" required>
+          <span class="field-error" data-for="email"></span>
+        </label>
+        <label>Username
+          <input type="text" name="userName" required>
+          <span class="field-error" data-for="userName"></span>
+        </label>
+        <label>Password
+          <input type="password" name="password" required>
+          <span class="field-error" data-for="password"></span>
+        </label>
+        <button type="submit" class="submit">Create account</button>
+      </form>
+
+      <div class="session-row">
+        <div id="sessionState" class="session-state">Not signed in</div>
+        <button id="logoutBtn" class="clear-btn" style="display:none;">log out</button>
+      </div>
+    </section>
+
+    <section class="panel console-panel">
+      <div class="console-header">
+        <span>request log</span>
+        <button id="clearLog" class="clear-btn">clear</button>
+      </div>
+      <div id="log" class="log"></div>
+    </section>
+  </main>
+</div>
+
+<script src="/js/app.js"></script>
+</body>
+</html>

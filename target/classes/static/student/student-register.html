@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Register — curdFirst console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #12181B;
+    --panel: #1A2226;
+    --panel-raised: #202A2F;
+    --border: #2B363B;
+    --ink: #EDEAE0;
+    --ink-dim: #9AA5A8;
+    --gold: #C9A227;
+    --gold-soft: rgba(201,162,39,0.14);
+    --good: #5FAE7E;
+    --good-soft: rgba(95,174,126,0.12);
+    --bad: #D06B60;
+    --bad-soft: rgba(208,107,96,0.12);
+    --radius: 10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse at top left, rgba(201,162,39,0.05), transparent 45%),
+      var(--bg);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    padding:32px 20px 80px;
+  }
+
+  body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    background:
+            radial-gradient(circle at 20% 30%, rgba(0,255,200,.12), transparent 35%),
+            radial-gradient(circle at 80% 20%, rgba(0,170,255,.10), transparent 35%),
+            radial-gradient(circle at 50% 80%, rgba(140,0,255,.10), transparent 40%);
+    filter:blur(60px);
+    animation:aurora 12s ease-in-out infinite alternate;
+    z-index:-1;
+  }
+
+  @keyframes aurora{
+    from{
+      transform:translate(-30px,-20px) scale(1);
+    }
+    to{
+      transform:translate(40px,30px) scale(1.2);
+    }
+  }
+
+  .wrap{max-width:1080px;margin:0 auto;}
+
+  /* ---------- Header ---------- */
+  header{
+    display:flex;justify-content:space-between;align-items:flex-end;
+    gap:20px;flex-wrap:wrap;
+    margin-bottom:28px;
+    border-bottom:1px solid var(--border);
+    padding-bottom:20px;
+  }
+  .title-block .eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;letter-spacing:0.14em;text-transform:uppercase;
+    color:var(--gold);margin-bottom:6px;
+  }
+  h1{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:clamp(28px,4vw,38px);
+    margin:0;letter-spacing:-0.01em;
+  }
+  .conn{
+    display:flex;align-items:center;gap:10px;
+    font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-dim);
+  }
+  .conn input{
+    background:var(--panel-raised);
+    border:1px solid var(--border);
+    color:var(--ink);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    padding:8px 10px;
+    border-radius:6px;
+    width:280px;
+    outline:none;
+  }
+  .conn input:focus{border-color:var(--gold);}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--ink-dim);flex-shrink:0;transition:background .2s;}
+  .dot.ok{background:var(--good);box-shadow:0 0 8px var(--good);}
+  .dot.fail{background:var(--bad);box-shadow:0 0 8px var(--bad);}
+
+  /* ---------- Layout ---------- */
+  .console{
+    display:grid;
+    grid-template-columns:180px 1fr;
+    gap:24px;
+    align-items:start;
+  }
+  @media (max-width:720px){
+    .console{grid-template-columns:1fr;}
+  }
+
+  nav.tabs{
+    display:flex;flex-direction:column;gap:2px;
+    position:sticky;top:24px;
+  }
+  nav.tabs button{
+    all:unset;
+    cursor:pointer;
+    font-family:'JetBrains Mono',monospace;
+    font-size:12.5px;
+    color:var(--ink-dim);
+    padding:11px 14px;
+    border-radius:8px;
+    border-left:2px solid transparent;
+    transition:background .15s,color .15s;
+    display:flex;align-items:center;gap:9px;
+  }
+  nav.tabs button .num{color:var(--gold);opacity:.7;}
+  nav.tabs button:hover{background:var(--panel);color:var(--ink);}
+  nav.tabs button.active{
+    background:var(--panel-raised);
+    color:var(--ink);
+    border-left-color:var(--gold);
+  }
+  @media (max-width:720px){
+    nav.tabs{
+      flex-direction:row;overflow-x:auto;
+      position:static;padding-bottom:6px;
+    }
+    nav.tabs button{flex-shrink:0;}
+  }
+
+  section.panel{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:26px;
+    display:none;
+  }
+  section.panel.active{display:block;}
+  .panel h2{
+    font-family:'Fraunces',serif;font-weight:600;font-size:20px;margin:0 0 4px;
+  }
+  .panel .sub{color:var(--ink-dim);font-size:13px;margin:0 0 22px;}
+  .panel .sub code{
+    font-family:'JetBrains Mono',monospace;
+    background:var(--panel-raised);
+    padding:2px 6px;border-radius:4px;color:var(--gold);font-size:12px;
+  }
+
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;}
+  .field{display:flex;flex-direction:column;gap:6px;}
+  .field.full{grid-column:1/-1;}
+  .field label{font-size:12px;color:var(--ink-dim);font-weight:500;}
+  .field input{
+    background:var(--panel-raised);
+    border:1px solid var(--border);
+    color:var(--ink);
+    padding:10px 12px;
+    border-radius:7px;
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+    outline:none;
+    transition:border-color .15s;
+  }
+  .field input:focus{border-color:var(--gold);}
+  @media (max-width:560px){.form-grid{grid-template-columns:1fr;}}
+
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;}
+  button.btn{
+    all:unset;cursor:pointer;
+    font-family:'Inter',sans-serif;font-weight:600;font-size:13.5px;
+    padding:10px 18px;border-radius:7px;
+    background:var(--gold);color:#1A1503;
+    transition:filter .15s, transform .1s;
+  }
+  button.btn:hover{filter:brightness(1.08);}
+  button.btn:active{transform:scale(0.98);}
+  button.btn.ghost{
+    background:transparent;color:var(--ink);border:1px solid var(--border);
+  }
+  button.btn.ghost:hover{border-color:var(--ink-dim);}
+  button.btn.danger{background:var(--bad);color:#2A0E0A;}
+  button.btn:disabled{opacity:.5;cursor:default;}
+
+  /* ---------- Result / status ---------- */
+  .result{margin-top:20px;}
+  .status-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .stamp{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+    padding:4px 10px;border-radius:5px;
+    border:1px solid;
+    transform:rotate(-1deg);
+  }
+  .stamp.pending{color:var(--ink-dim);border-color:var(--border);background:var(--panel-raised);}
+  .stamp.good{color:var(--good);border-color:var(--good);background:var(--good-soft);}
+  .stamp.bad{color:var(--bad);border-color:var(--bad);background:var(--bad-soft);}
+  .status-code{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-dim);}
+
+  pre.json{
+    background:#0E1417;
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:16px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:12.5px;
+    line-height:1.6;
+    overflow-x:auto;
+    margin:0;
+    color:var(--ink-dim);
+    min-height:44px;
+  }
+  .j-key{color:#8FBBD9;}
+  .j-str{color:#B8CF9E;}
+  .j-num{color:var(--gold);}
+  .j-bool{color:#D8A6D8;}
+  .j-null{color:var(--ink-dim);}
+
+  /* ---------- Table (All students) ---------- */
+  .table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:8px;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{
+    text-align:left;font-family:'JetBrains Mono',monospace;font-size:11px;
+    text-transform:uppercase;letter-spacing:.06em;color:var(--ink-dim);
+    background:var(--panel-raised);padding:10px 12px;border-bottom:1px solid var(--border);
+  }
+  td{padding:10px 12px;border-bottom:1px solid var(--border);color:var(--ink);}
+  tr:last-child td{border-bottom:none;}
+  td.roll{font-family:'JetBrains Mono',monospace;color:var(--gold);}
+  td.actions-cell{display:flex;gap:6px;flex-wrap:wrap;}
+  .mini-btn{
+    all:unset;cursor:pointer;font-size:11px;font-family:'JetBrains Mono',monospace;
+    padding:5px 9px;border-radius:5px;border:1px solid var(--border);color:var(--ink-dim);
+    transition:.15s;
+  }
+  .mini-btn:hover{border-color:var(--gold);color:var(--gold);}
+  .mini-btn.danger:hover{border-color:var(--bad);color:var(--bad);}
+  .empty-state{
+    padding:36px 20px;text-align:center;color:var(--ink-dim);font-size:13px;
+  }
+  .empty-state strong{color:var(--ink);display:block;font-family:'Fraunces',serif;font-size:16px;margin-bottom:6px;font-weight:600;}
+
+  .helper-note{
+    margin-top:16px;font-size:12px;color:var(--ink-dim);
+    border-top:1px dashed var(--border);padding-top:14px;
+  }
+  .helper-note code{color:var(--gold);font-family:'JetBrains Mono',monospace;}
+
+
+
+
+  /* ---------- This is the change for logout button ---------- */
+
+  .header-actions{
+    display:flex;
+    align-items:center;
+    gap:15px;
+  }
+
+  #loggedUser{
+    color: var(--gold);
+    font-size:14px;
+  }
+
+  #logoutBtn{
+    background:#d9534f;
+    color:white;
+    border:none;
+    padding:10px 18px;
+    border-radius:6px;
+    cursor:pointer;
+    transition:0.2s;
+  }
+
+  #logoutBtn:hover{
+    background:#c9302c;
+  }
+
+</style>
+
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="title-block">
+      <div class="eyebrow">curdFirst · console</div>
+      <h1>Student Register</h1>
+    </div>
+<!--    <div class="conn">-->
+<!--      <span class="dot" id="connDot"></span>-->
+<!--      <input type="text" id="baseUrl" value="http://localhost:8080/api/students" spellcheck="false">-->
+<!--    </div>-->
+    <div class="conn">
+      <span class="dot" id="connDot"></span>
+      <input type="text" id="baseUrl" spellcheck="false" readonly>
+    </div>
+
+    <script>
+      document.getElementById("baseUrl").value =
+              window.location.origin + "/api/students";
+    </script>
+
+
+
+
+    <!-- This is the change i made to add log out button -->
+    <div class="header-actions">
+      <span id="loggedUser"></span>
+      <button id="logoutBtn">Logout</button>
+    </div>
+  </header>
+
+  <div class="console">
+    <nav class="tabs">
+      <button class="tab-btn active" data-tab="add"><span class="num">01</span> Add student</button>
+      <button class="tab-btn" data-tab="all"><span class="num">02</span> All students</button>
+      <button class="tab-btn" data-tab="find"><span class="num">03</span> Find by ID</button>
+      <button class="tab-btn" data-tab="update"><span class="num">04</span> Update</button>
+      <button class="tab-btn" data-tab="delete"><span class="num">05</span> Delete</button>
+      <button class="tab-btn" id="nav-attendance"><span class="num">06</span> Attendance</button>
+    </nav>
+
+    <div class="panel-host">
+
+      <!-- 01 ADD -->
+      <section class="panel active" id="panel-add">
+        <h2>Add a student</h2>
+        <p class="sub">POST → <code>/api/students</code></p>
+        <div class="form-grid">
+          <div class="field"><label>Name</label><input id="add-name" placeholder="e.g. Ravi Kumar"></div>
+          <div class="field"><label>Age (min 14)</label><input id="add-age" type="number" placeholder="e.g. 16"></div>
+          <div class="field"><label>Email</label><input id="add-email" type="email" placeholder="e.g. ravi@example.com"></div>
+          <div class="field"><label>Roll No (101–199)</label><input id="add-rollNo" type="number" placeholder="e.g. 101"></div>
+          <div class="field"><label>Subject</label><input id="add-subject" placeholder="e.g. Computer Science"></div>
+          <div class="field"><label>Class</label><input id="add-class" placeholder="e.g. 10-A"></div>
+        </div>
+        <div class="actions">
+          <button class="btn" id="add-submit">Create student</button>
+          <button class="btn ghost" id="add-clear">Clear form</button>
+        </div>
+        <div class="result">
+          <div class="status-row"><span class="stamp pending" id="add-stamp">idle</span><span class="status-code" id="add-code"></span></div>
+          <pre class="json" id="add-out">Response will appear here.</pre>
+        </div>
+      </section>
+
+      <!-- 02 ALL -->
+      <section class="panel" id="panel-all">
+        <h2>All students</h2>
+        <p class="sub">GET → <code>/api/students</code></p>
+        <div class="actions" style="margin-bottom:18px;">
+          <button class="btn ghost" id="all-refresh">Refresh list</button>
+        </div>
+        <div id="all-host"><div class="empty-state"><strong>No data loaded yet</strong>Click "Refresh list" to fetch students.</div></div>
+        <div class="result">
+          <div class="status-row"><span class="stamp pending" id="all-stamp">idle</span><span class="status-code" id="all-code"></span></div>
+          <pre class="json" id="all-out">Response will appear here.</pre>
+        </div>
+      </section>
+
+      <!-- 03 FIND -->
+      <section class="panel" id="panel-find">
+        <h2>Find a student by ID</h2>
+        <p class="sub">GET → <code>/api/students/get/{id}</code></p>
+        <div class="form-grid">
+          <div class="field"><label>Student ID</label><input id="find-id" type="number" placeholder="e.g. 1"></div>
+        </div>
+        <div class="actions"><button class="btn" id="find-submit">Fetch student</button></div>
+        <div class="result">
+          <div class="status-row"><span class="stamp pending" id="find-stamp">idle</span><span class="status-code" id="find-code"></span></div>
+          <pre class="json" id="find-out">Response will appear here.</pre>
+        </div>
+      </section>
+
+      <!-- 04 UPDATE -->
+      <section class="panel" id="panel-update">
+        <h2>Update a student</h2>
+        <p class="sub">PUT → <code>/api/students/{id}</code> — all fields are sent, so fill in the ones you want kept.</p>
+        <div class="form-grid">
+          <div class="field full"><label>Student ID</label><input id="upd-id" type="number" placeholder="e.g. 1"></div>
+          <div class="field"><label>Name</label><input id="upd-name" placeholder="e.g. Ravi Kumar"></div>
+          <div class="field"><label>Age</label><input id="upd-age" type="number"></div>
+          <div class="field"><label>Email</label><input id="upd-email" type="email"></div>
+          <div class="field"><label>Roll No</label><input id="upd-rollNo" type="number"></div>
+          <div class="field"><label>Subject</label><input id="upd-subject"></div>
+          <div class="field"><label>Class</label><input id="upd-class" placeholder="e.g. 10-A"></div>
+        </div>
+        <div class="actions">
+          <button class="btn" id="upd-submit">Update student</button>
+          <button class="btn ghost" id="upd-load">Load current values</button>
+        </div>
+        <div class="result">
+          <div class="status-row"><span class="stamp pending" id="upd-stamp">idle</span><span class="status-code" id="upd-code"></span></div>
+          <pre class="json" id="upd-out">Response will appear here.</pre>
+        </div>
+      </section>
+
+      <!-- 05 DELETE -->
+      <section class="panel" id="panel-delete">
+        <h2>Delete records</h2>
+        <p class="sub">Three ways to remove data — pick carefully, the last one is permanent for everyone.</p>
+
+        <div style="display:flex;flex-direction:column;gap:22px;">
+
+          <div>
+            <div class="field" style="max-width:220px;margin-bottom:10px;"><label>Student ID</label><input id="del-id" type="number" placeholder="e.g. 1"></div>
+            <div class="actions">
+              <button class="btn ghost" id="soft-submit">Soft delete by ID</button>
+              <button class="btn danger" id="hard-submit">Delete by ID (permanent)</button>
+            </div>
+            <p class="sub" style="margin:8px 0 0;">Soft delete → <code>PATCH /api/students/soft-delete?id={id}</code> · Hard delete → <code>DELETE /api/students/delete/{id}</code></p>
+          </div>
+
+          <div style="border-top:1px dashed var(--border);padding-top:18px;">
+            <div class="actions">
+              <button class="btn danger" id="wipe-submit">Delete ALL students</button>
+            </div>
+            <p class="sub" style="margin:8px 0 0;">DELETE → <code>/api/students</code> — wipes every record. Asks for confirmation first.</p>
+          </div>
+
+        </div>
+
+        <div class="result">
+          <div class="status-row"><span class="stamp pending" id="del-stamp">idle</span><span class="status-code" id="del-code"></span></div>
+          <pre class="json" id="del-out">Response will appear here.</pre>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+
+const $ = (id) => document.getElementById(id);
+const currentUser = sessionStorage.getItem("currentUserEmail");
+
+if (!currentUser) {
+  alert("Please login first.");
+  window.location.href = "/";
+}
+
+// ---------- Tabs ----------
+// Only the tabs with a data-tab attribute switch a local panel (01-05).
+document.querySelectorAll('.tab-btn[data-tab]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    $('panel-'+btn.dataset.tab).classList.add('active');
+  });
+});
+
+// 06 Attendance has no local panel — it navigates to the attendance page instead.
+$('nav-attendance').addEventListener('click', () => {
+  window.location.href = "/attendance/attendance.html";
+});
+
+function baseUrl(){ return $('baseUrl').value.replace(/\/+$/,''); }
+
+// ---------- JSON syntax highlight ----------
+function highlight(obj){
+  const str = JSON.stringify(obj, null, 2);
+  return str
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false)\b|\bnull\b|-?\d+\.?\d*(?:[eE][+-]?\d+)?)/g,
+      (match)=>{
+        let cls = 'j-num';
+        if(/^"/.test(match)){ cls = /:$/.test(match) ? 'j-key' : 'j-str'; }
+        else if(/true|false/.test(match)){ cls='j-bool'; }
+        else if(/null/.test(match)){ cls='j-null'; }
+        return `<span class="${cls}">${match}</span>`;
+      });
+}
+
+function setStamp(prefix, state, code){
+  const s = $(prefix+'-stamp');
+  s.className = 'stamp ' + state;
+  s.textContent = state === 'pending' ? 'idle' : (state === 'good' ? 'success' : 'error');
+  $(prefix+'-code').textContent = code ? ('HTTP ' + code) : '';
+}
+
+function setOut(prefix, data){
+  $(prefix+'-out').innerHTML = highlight(data);
+}
+
+function markConn(ok){
+  const dot = $('connDot');
+  dot.className = 'dot ' + (ok ? 'ok' : 'fail');
+}
+
+// generic request helper
+async function request(prefix, {method, path, body}){
+  setStamp(prefix,'pending');
+  $(prefix+'-out').textContent = 'Loading…';
+  try{
+    const res = await fetch(baseUrl()+path, {
+      method,
+      headers: body ? {'Content-Type':'application/json'} : undefined,
+      body: body ? JSON.stringify(body) : undefined
+    });
+    markConn(true);
+    let data;
+    const text = await res.text();
+    try{ data = text ? JSON.parse(text) : {}; }catch(e){ data = { raw: text }; }
+    setStamp(prefix, res.ok ? 'good' : 'bad', res.status);
+    setOut(prefix, data);
+    return {ok: res.ok, status: res.status, data};
+  }catch(err){
+    markConn(false);
+    setStamp(prefix,'bad');
+    setOut(prefix, {error: 'Request failed', detail: err.message, hint: 'Is the backend running? Is CORS enabled?'});
+    return {ok:false, error: err};
+  }
+}
+
+// ---------- 01 Add ----------
+$('add-submit').addEventListener('click', async ()=>{
+  const body = {
+    name: $('add-name').value,
+    age: Number($('add-age').value),
+    email: $('add-email').value,
+    rollNo: Number($('add-rollNo').value),
+    subject: $('add-subject').value,
+    studentClass: $('add-class').value
+  };
+  await request('add', {method:'POST', path:'', body});
+});
+$('add-clear').addEventListener('click', ()=>{
+  ['add-name','add-age','add-email','add-rollNo','add-subject','add-class'].forEach(id=>$(id).value='');
+});
+
+// ---------- 02 All ----------
+function renderTable(list){
+  const host = $('all-host');
+  if(!Array.isArray(list) || list.length===0){
+    host.innerHTML = '<div class="empty-state"><strong>No students found</strong>Add one from the "Add student" tab.</div>';
+    return;
+  }
+  const rows = list.map(s=>`
+    <tr>
+      <td class="roll">#${s.rollNo ?? '—'}</td>
+      <td>${s.id ?? '—'}</td>
+      <td>${s.name ?? '—'}</td>
+      <td>${s.age ?? '—'}</td>
+      <td>${s.email ?? '—'}</td>
+      <td>${s.subject ?? '—'}</td>
+      <td>${s.studentClass ?? '—'}</td>
+      <td class="actions-cell">
+        <button class="mini-btn" data-act="find" data-id="${s.id}">view</button>
+        <button class="mini-btn" data-act="edit" data-id="${s.id}">edit</button>
+        <button class="mini-btn danger" data-act="del" data-id="${s.id}">delete</button>
+      </td>
+    </tr>`).join('');
+  host.innerHTML = `<div class="table-wrap"><table>
+    <thead><tr><th>Roll</th><th>ID</th><th>Name</th><th>Age</th><th>Email</th><th>Subject</th><th>Class</th><th>Actions</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>`;
+
+  host.querySelectorAll('.mini-btn').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      const id = b.dataset.id;
+      if(b.dataset.act==='find'){
+        document.querySelector('[data-tab="find"]').click();
+        $('find-id').value = id;
+        $('find-submit').click();
+      } else if(b.dataset.act==='edit'){
+        document.querySelector('[data-tab="update"]').click();
+        $('upd-id').value = id;
+        $('upd-load').click();
+      } else if(b.dataset.act==='del'){
+        document.querySelector('[data-tab="delete"]').click();
+        $('del-id').value = id;
+      }
+    });
+  });
+}
+
+$('all-refresh').addEventListener('click', async ()=>{
+  const r = await request('all', {method:'GET', path:''});
+  if(r.ok) renderTable(r.data);
+});
+
+// ---------- 03 Find ----------
+$('find-submit').addEventListener('click', async ()=>{
+  const id = $('find-id').value;
+  if(!id){ alert('Enter a student ID first.'); return; }
+  await request('find', {method:'GET', path:`/get/${id}`});
+});
+
+// ---------- 04 Update ----------
+$('upd-load').addEventListener('click', async ()=>{
+  const id = $('upd-id').value;
+  if(!id){ alert('Enter a student ID first.'); return; }
+  const r = await request('upd', {method:'GET', path:`/get/${id}`});
+  if(r.ok){
+    $('upd-name').value = r.data.name ?? '';
+    $('upd-age').value = r.data.age ?? '';
+    $('upd-email').value = r.data.email ?? '';
+    $('upd-rollNo').value = r.data.rollNo ?? '';
+    $('upd-subject').value = r.data.subject ?? '';
+    $('upd-class').value = r.data.studentClass ?? '';
+  }
+});
+$('upd-submit').addEventListener('click', async ()=>{
+  const id = $('upd-id').value;
+  if(!id){ alert('Enter a student ID first.'); return; }
+  const body = {
+    name: $('upd-name').value,
+    age: Number($('upd-age').value),
+    email: $('upd-email').value,
+    rollNo: Number($('upd-rollNo').value),
+    subject: $('upd-subject').value,
+    studentClass: $('upd-class').value
+  };
+  await request('upd', {method:'PUT', path:`/${id}`, body});
+});
+
+// ---------- 05 Delete ----------
+$('soft-submit').addEventListener('click', async ()=>{
+  const id = $('del-id').value;
+  if(!id){ alert('Enter a student ID first.'); return; }
+  await request('del', {method:'PATCH', path:`/soft-delete?id=${id}`});
+});
+$('hard-submit').addEventListener('click', async ()=>{
+  const id = $('del-id').value;
+  if(!id){ alert('Enter a student ID first.'); return; }
+  if(!confirm(`Permanently delete student #${id}? This cannot be undone.`)) return;
+  await request('del', {method:'DELETE', path:`/delete/${id}`});
+});
+$('wipe-submit').addEventListener('click', async ()=>{
+  if(!confirm('This will delete EVERY student record. Continue?')) return;
+  if(!confirm('Really sure? This is permanent.')) return;
+  await request('del', {method:'DELETE', path:''});
+});
+
+// initial ping
+window.addEventListener('load', ()=>{
+  fetch(baseUrl()).then(r=>markConn(true)).catch(()=>markConn(false));
+});
+
+
+// This change is for logout button
+const email = sessionStorage.getItem("currentUserEmail");
+
+document.getElementById("loggedUser").textContent =
+        "Welcome, " + email;
+
+document.getElementById("logoutBtn").addEventListener("click", () => {
+
+  sessionStorage.clear();
+
+  window.location.replace("/");
+
+});
+</script>
+</body>
+</html>

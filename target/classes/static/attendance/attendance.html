@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Attendance — curdFirst console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #12181B;
+    --panel: #1A2226;
+    --panel-raised: #202A2F;
+    --border: #2B363B;
+    --ink: #EDEAE0;
+    --ink-dim: #9AA5A8;
+    --gold: #C9A227;
+    --gold-soft: rgba(201,162,39,0.14);
+    --good: #5FAE7E;
+    --good-soft: rgba(95,174,126,0.12);
+    --bad: #D06B60;
+    --bad-soft: rgba(208,107,96,0.12);
+    --radius: 10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse at top left, rgba(201,162,39,0.05), transparent 45%),
+      var(--bg);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    padding:32px 20px 80px;
+  }
+
+  body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    background:
+            radial-gradient(circle at 20% 30%, rgba(0,255,200,.12), transparent 35%),
+            radial-gradient(circle at 80% 20%, rgba(0,170,255,.10), transparent 35%),
+            radial-gradient(circle at 50% 80%, rgba(140,0,255,.10), transparent 40%);
+    filter:blur(60px);
+    animation:aurora 12s ease-in-out infinite alternate;
+    z-index:-1;
+  }
+
+  @keyframes aurora{
+    from{
+      transform:translate(-30px,-20px) scale(1);
+    }
+    to{
+      transform:translate(40px,30px) scale(1.2);
+    }
+  }
+
+  .wrap{max-width:1080px;margin:0 auto;}
+
+  header{
+    display:flex;justify-content:space-between;align-items:flex-end;
+    gap:20px;flex-wrap:wrap;
+    margin-bottom:28px;
+    border-bottom:1px solid var(--border);
+    padding-bottom:20px;
+  }
+  .title-block .eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;letter-spacing:0.14em;text-transform:uppercase;
+    color:var(--gold);margin-bottom:6px;
+  }
+  h1{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:clamp(28px,4vw,38px);
+    margin:0;letter-spacing:-0.01em;
+  }
+  .conn{
+    display:flex;align-items:center;gap:10px;
+    font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-dim);
+  }
+  .conn input{
+    background:var(--panel-raised);
+    border:1px solid var(--border);
+    color:var(--ink);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    padding:8px 10px;
+    border-radius:6px;
+    width:210px;
+    outline:none;
+  }
+  .conn input:focus{border-color:var(--gold);}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--ink-dim);flex-shrink:0;transition:background .2s;}
+  .dot.ok{background:var(--good);box-shadow:0 0 8px var(--good);}
+  .dot.fail{background:var(--bad);box-shadow:0 0 8px var(--bad);}
+
+  .header-actions{display:flex;align-items:center;gap:12px;}
+  #loggedUser{color: var(--gold);font-size:14px;}
+  .nav-link{
+    all:unset;cursor:pointer;
+    font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-dim);
+    border:1px solid var(--border);padding:9px 14px;border-radius:6px;transition:.15s;
+  }
+  .nav-link:hover{border-color:var(--gold);color:var(--gold);}
+  #logoutBtn{
+    background:#d9534f;color:white;border:none;padding:10px 18px;
+    border-radius:6px;cursor:pointer;transition:0.2s;font-family:'Inter',sans-serif;font-size:13px;
+  }
+  #logoutBtn:hover{background:#c9302c;}
+
+  .console{display:grid;grid-template-columns:180px 1fr;gap:24px;align-items:start;}
+  @media (max-width:720px){.console{grid-template-columns:1fr;}}
+
+  nav.tabs{display:flex;flex-direction:column;gap:2px;position:sticky;top:24px;}
+  nav.tabs button{
+    all:unset;cursor:pointer;
+    font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--ink-dim);
+    padding:11px 14px;border-radius:8px;border-left:2px solid transparent;
+    transition:background .15s,color .15s;display:flex;align-items:center;gap:9px;
+  }
+  nav.tabs button .num{color:var(--gold);opacity:.7;}
+  nav.tabs button:hover{background:var(--panel);color:var(--ink);}
+  nav.tabs button.active{background:var(--panel-raised);color:var(--ink);border-left-color:var(--gold);}
+  @media (max-width:720px){
+    nav.tabs{flex-direction:row;overflow-x:auto;position:static;padding-bottom:6px;}
+    nav.tabs button{flex-shrink:0;}
+  }
+
+  section.panel{
+    background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);
+    padding:26px;display:none;
+  }
+  section.panel.active{display:block;}
+  .panel h2{font-family:'Fraunces',serif;font-weight:600;font-size:20px;margin:0 0 4px;}
+  .panel .sub{color:var(--ink-dim);font-size:13px;margin:0 0 22px;}
+  .panel .sub code{
+    font-family:'JetBrains Mono',monospace;background:var(--panel-raised);
+    padding:2px 6px;border-radius:4px;color:var(--gold);font-size:12px;
+  }
+
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;}
+  .field{display:flex;flex-direction:column;gap:6px;}
+  .field.full{grid-column:1/-1;}
+  .field label{font-size:12px;color:var(--ink-dim);font-weight:500;}
+  .field input{
+    background:var(--panel-raised);border:1px solid var(--border);color:var(--ink);
+    padding:10px 12px;border-radius:7px;font-family:'Inter',sans-serif;font-size:14px;
+    outline:none;transition:border-color .15s;
+  }
+  .field input:focus{border-color:var(--gold);}
+  .field select{
+    background:var(--panel-raised);border:1px solid var(--border);color:var(--ink);
+    padding:10px 12px;border-radius:7px;font-family:'Inter',sans-serif;font-size:14px;
+    outline:none;transition:border-color .15s;
+  }
+  .field select:focus{border-color:var(--gold);}
+  @media (max-width:560px){.form-grid{grid-template-columns:1fr;}}
+
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;}
+  button.btn{
+    all:unset;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600;font-size:13.5px;
+    padding:10px 18px;border-radius:7px;background:var(--gold);color:#1A1503;
+    transition:filter .15s, transform .1s;
+  }
+  button.btn:hover{filter:brightness(1.08);}
+  button.btn:active{transform:scale(0.98);}
+  button.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--border);}
+  button.btn.ghost:hover{border-color:var(--ink-dim);}
+  button.btn.danger{background:var(--bad);color:#2A0E0A;}
+  button.btn:disabled{opacity:.5;cursor:default;}
+
+  .result{margin-top:20px;}
+  .status-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .stamp{
+    font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;letter-spacing:.08em;
+    text-transform:uppercase;padding:4px 10px;border-radius:5px;border:1px solid;transform:rotate(-1deg);
+  }
+  .stamp.pending{color:var(--ink-dim);border-color:var(--border);background:var(--panel-raised);}
+  .stamp.good{color:var(--good);border-color:var(--good);background:var(--good-soft);}
+  .stamp.bad{color:var(--bad);border-color:var(--bad);background:var(--bad-soft);}
+  .status-code{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-dim);}
+
+  pre.json{
+    background:#0E1417;border:1px solid var(--border);border-radius:8px;padding:16px;
+    font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.6;overflow-x:auto;
+    margin:0;color:var(--ink-dim);min-height:44px;
+  }
+  .j-key{color:#8FBBD9;} .j-str{color:#B8CF9E;} .j-num{color:var(--gold);}
+  .j-bool{color:#D8A6D8;} .j-null{color:var(--ink-dim);}
+
+  .table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:8px;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{
+    text-align:left;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;
+    letter-spacing:.06em;color:var(--ink-dim);background:var(--panel-raised);padding:10px 12px;
+    border-bottom:1px solid var(--border);
+  }
+  td{padding:10px 12px;border-bottom:1px solid var(--border);color:var(--ink);vertical-align:middle;}
+  tr:last-child td{border-bottom:none;}
+  td.roll{font-family:'JetBrains Mono',monospace;color:var(--gold);}
+  .empty-state{padding:36px 20px;text-align:center;color:var(--ink-dim);font-size:13px;}
+  .empty-state strong{color:var(--ink);display:block;font-family:'Fraunces',serif;font-size:16px;margin-bottom:6px;font-weight:600;}
+
+  .helper-note{margin-top:16px;font-size:12px;color:var(--ink-dim);border-top:1px dashed var(--border);padding-top:14px;}
+  .helper-note code{color:var(--gold);font-family:'JetBrains Mono',monospace;}
+
+  /* attendance-specific bits */
+  .present-toggle{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;}
+  .present-toggle input{width:16px;height:16px;accent-color:var(--good);cursor:pointer;}
+  .present-toggle span{font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-dim);}
+  .present-toggle.is-present span{color:var(--good);}
+  .present-toggle.is-absent span{color:var(--bad);}
+  .remark-input{
+    background:var(--panel-raised);border:1px solid var(--border);color:var(--ink);
+    padding:7px 9px;border-radius:6px;font-family:'Inter',sans-serif;font-size:12.5px;
+    width:100%;min-width:120px;outline:none;
+  }
+  .remark-input:focus{border-color:var(--gold);}
+  .badge{
+    font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;letter-spacing:.05em;
+    text-transform:uppercase;padding:3px 9px;border-radius:5px;border:1px solid;display:inline-block;
+  }
+  .badge.good{color:var(--good);border-color:var(--good);background:var(--good-soft);}
+  .badge.bad{color:var(--bad);border-color:var(--bad);background:var(--bad-soft);}
+  .stat-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:18px;}
+  .stat-card{background:var(--panel-raised);border:1px solid var(--border);border-radius:8px;padding:14px 16px;}
+  .stat-card .label{font-family:'JetBrains Mono',monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-dim);margin-bottom:6px;}
+  .stat-card .value{font-family:'Fraunces',serif;font-weight:600;font-size:24px;}
+  .stat-card .value.gold{color:var(--gold);}
+  .stat-card .value.good{color:var(--good);}
+  .stat-card .value.bad{color:var(--bad);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="title-block">
+      <div class="eyebrow">curdFirst · console</div>
+      <h1>Attendance</h1>
+    </div>
+<!--    <div class="conn">-->
+<!--      <span class="dot" id="connDot"></span>-->
+<!--      <input type="text" id="apiRoot" value="http://localhost:8080" spellcheck="false">-->
+<!--    </div>-->
+    <div class="conn">
+      <span class="dot" id="connDot"></span>
+      <input type="text" id="apiRoot" spellcheck="false" readonly>
+    </div>
+
+    <script>
+      document.getElementById("apiRoot").value = window.location.origin;
+    </script>
+    <div class="header-actions">
+      <button class="nav-link" id="toStudents">← Students</button>
+      <span id="loggedUser"></span>
+      <button id="logoutBtn">Logout</button>
+    </div>
+  </header>
+
+  <div class="console">
+    <nav class="tabs">
+      <button class="tab-btn active" data-tab="daily"><span class="num">01</span> Take attendance</button>
+      <button class="tab-btn" data-tab="history"><span class="num">02</span> Student history</button>
+      <button class="tab-btn" data-tab="edit"><span class="num">03</span> Edit / Delete</button>
+    </nav>
+
+    <div class="panel-host">
+
+      <!-- 01 DAILY -->
+      <section class="panel active" id="panel-daily">
+        <h2>Take today's attendance</h2>
+        <p class="sub">Pick a class to load just that roster, or choose "All students" — marks present/absent with an optional remark, then saves all at once via POST → <code>/api/attendance/bulk</code></p>
+
+        <div class="form-grid" style="grid-template-columns:220px 220px 1fr;align-items:end;">
+          <div class="field"><label>Date</label><input id="daily-date" type="date"></div>
+          <div class="field"><label>Class</label>
+            <select id="daily-class">
+              <option value="">All students</option>
+            </select>
+          </div>
+        </div>
+        <div class="actions" style="margin-bottom:18px;">
+          <button class="btn ghost" id="daily-load">Load class</button>
+          <button class="btn" id="daily-save" disabled>Save attendance</button>
+        </div>
+
+        <div id="daily-host"><div class="empty-state"><strong>No class loaded yet</strong>Pick a date and click "Load class".</div></div>
+
+        <div class="result">
+          <div class="status-row"><span class="stamp pending" id="daily-stamp">idle</span><span class="status-code" id="daily-code"></span></div>
+          <pre class="json" id="daily-out">Response will appear here.</pre>
+        </div>
+      </section>
+
+      <!-- 02 HISTORY -->
+      <section class="panel" id="panel-history">
+        <h2>Student attendance history</h2>
+        <p class="sub">GET → <code>/api/attendance/student/{id}</code> and <code>/api/attendance/student/{id}/summary</code></p>
+
+        <div class="form-grid">
+          <div class="field"><label>Student ID</label><input id="hist-id" type="number" placeholder="e.g. 1"></div>
+        </div>
+        <div class="actions">
+          <button class="btn" id="hist-load">Load history</button>
+          <button class="btn ghost" id="hist-summary">Load summary</button>
+        </div>
+
+        <div id="hist-stats"></div>
+        <div id="hist-host" style="margin-top:16px;"><div class="empty-state"><strong>No history loaded yet</strong>Enter a student ID and click "Load history".</div></div>
+
+        <div class="result">
+          <div class="status-row"><span class="stamp pending" id="hist-stamp">idle</span><span class="status-code" id="hist-code"></span></div>
+          <pre class="json" id="hist-out">Response will appear here.</pre>
+        </div>
+      </section>
+
+      <!-- 03 EDIT / DELETE -->
+      <section class="panel" id="panel-edit">
+        <h2>Edit or delete a record</h2>
+        <p class="sub">PUT → <code>/api/attendance/{id}</code> · DELETE → <code>/api/attendance/{id}</code> — use the attendance record's own ID (shown in the JSON responses on the other tabs), not the student ID.</p>
+
+        <div class="form-grid">
+          <div class="field"><label>Attendance record ID</label><input id="edit-id" type="number" placeholder="e.g. 7"></div>
+          <div class="field"><label>Remark</label><input id="edit-remark" placeholder="optional"></div>
+          <div class="field full">
+            <label>Status</label>
+            <label class="present-toggle is-present" id="edit-toggle">
+              <input type="checkbox" id="edit-present" checked>
+              <span id="edit-toggle-label">Present</span>
+            </label>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn" id="edit-submit">Update record</button>
+          <button class="btn danger" id="edit-delete">Delete record</button>
+        </div>
+
+        <div class="result">
+          <div class="status-row"><span class="stamp pending" id="edit-stamp">idle</span><span class="status-code" id="edit-code"></span></div>
+          <pre class="json" id="edit-out">Response will appear here.</pre>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+
+const $ = (id) => document.getElementById(id);
+const currentUser = sessionStorage.getItem("currentUserEmail");
+
+if (!currentUser) {
+  alert("Please login first.");
+  window.location.href = "/";
+}
+
+document.getElementById("loggedUser").textContent = "Welcome, " + currentUser;
+document.getElementById("logoutBtn").addEventListener("click", () => {
+  sessionStorage.clear();
+  window.location.replace("/");
+});
+document.getElementById("toStudents").addEventListener("click", () => {
+  window.location.href = "/student/student-register.html";
+});
+
+// ---------- Tabs ----------
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    $('panel-'+btn.dataset.tab).classList.add('active');
+  });
+});
+
+function apiRoot(){ return $('apiRoot').value.replace(/\/+$/,''); }
+function studentsUrl(){ return apiRoot() + '/api/students'; }
+function attendanceUrl(){ return apiRoot() + '/api/attendance'; }
+
+// ---------- JSON syntax highlight ----------
+function highlight(obj){
+  const str = JSON.stringify(obj, null, 2);
+  return str
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false)\b|\bnull\b|-?\d+\.?\d*(?:[eE][+-]?\d+)?)/g,
+      (match)=>{
+        let cls = 'j-num';
+        if(/^"/.test(match)){ cls = /:$/.test(match) ? 'j-key' : 'j-str'; }
+        else if(/true|false/.test(match)){ cls='j-bool'; }
+        else if(/null/.test(match)){ cls='j-null'; }
+        return `<span class="${cls}">${match}</span>`;
+      });
+}
+
+function setStamp(prefix, state, code){
+  const s = $(prefix+'-stamp');
+  s.className = 'stamp ' + state;
+  s.textContent = state === 'pending' ? 'idle' : (state === 'good' ? 'success' : 'error');
+  $(prefix+'-code').textContent = code ? ('HTTP ' + code) : '';
+}
+function setOut(prefix, data){ $(prefix+'-out').innerHTML = highlight(data); }
+function markConn(ok){ $('connDot').className = 'dot ' + (ok ? 'ok' : 'fail'); }
+
+// generic request helper — full is an absolute URL (studentsUrl()/attendanceUrl() + path)
+async function request(prefix, {method, url, body}){
+  setStamp(prefix,'pending');
+  $(prefix+'-out').textContent = 'Loading…';
+  try{
+    const res = await fetch(url, {
+      method,
+      headers: body ? {'Content-Type':'application/json'} : undefined,
+      body: body ? JSON.stringify(body) : undefined
+    });
+    markConn(true);
+    let data;
+    const text = await res.text();
+    try{ data = text ? JSON.parse(text) : {}; }catch(e){ data = { raw: text }; }
+    setStamp(prefix, res.ok ? 'good' : 'bad', res.status);
+    setOut(prefix, data);
+    return {ok: res.ok, status: res.status, data};
+  }catch(err){
+    markConn(false);
+    setStamp(prefix,'bad');
+    setOut(prefix, {error: 'Request failed', detail: err.message, hint: 'Is the backend running? Is CORS enabled?'});
+    return {ok:false, error: err};
+  }
+}
+
+// ================= 01 DAILY =================
+// default date field to today
+$('daily-date').value = new Date().toISOString().slice(0,10);
+
+let dailyStudents = []; // last loaded student list, so "Save" doesn't need to re-fetch
+
+// Populate the class dropdown from whatever classes actually exist, so the
+// teacher picks a real class instead of typing one. "All students" (blank
+// value) stays as the first, always-available option.
+async function loadClassOptions(){
+  try{
+    const res = await fetch(`${studentsUrl()}/classes`);
+    if(!res.ok) return;
+    const classes = await res.json();
+    const select = $('daily-class');
+    const previousValue = select.value;
+    select.innerHTML = '<option value="">All students</option>' +
+      classes.map(c => `<option value="${c}">${c}</option>`).join('');
+    // Prioritise taking attendance by class: if nothing was picked yet and at
+    // least one class exists, default to the first class rather than "All".
+    if(previousValue && classes.includes(previousValue)){
+      select.value = previousValue;
+    } else if(classes.length > 0){
+      select.value = classes[0];
+    }
+  }catch(e){ /* class list is a convenience — ignore failures here */ }
+}
+loadClassOptions();
+
+$('daily-load').addEventListener('click', async () => {
+  const date = $('daily-date').value;
+  if(!date){ alert('Pick a date first.'); return; }
+
+  const selectedClass = $('daily-class').value;
+  const rosterUrl = selectedClass
+    ? `${studentsUrl()}?studentClass=${encodeURIComponent(selectedClass)}`
+    : studentsUrl();
+
+  const studentsRes = await request('daily', {method:'GET', url: rosterUrl});
+  if(!studentsRes.ok) return;
+  dailyStudents = studentsRes.data;
+
+  // pre-fill with anything already marked for this date, if any
+  const existingRes = await request('daily', {method:'GET', url: `${attendanceUrl()}/date/${date}`});
+  const existingByStudentId = {};
+  if(existingRes.ok && Array.isArray(existingRes.data)){
+    existingRes.data.forEach(r => { existingByStudentId[r.studentId] = r; });
+  }
+
+  renderDailyTable(dailyStudents, existingByStudentId);
+  $('daily-save').disabled = dailyStudents.length === 0;
+});
+
+function renderDailyTable(students, existingByStudentId){
+  const host = $('daily-host');
+  if(!Array.isArray(students) || students.length === 0){
+    const selectedClass = $('daily-class').value;
+    const hint = selectedClass
+      ? `No students found in class "${selectedClass}". Try "All students" or add one from the Students page.`
+      : 'Add students first from the Students page.';
+    host.innerHTML = `<div class="empty-state"><strong>No students found</strong>${hint}</div>`;
+    return;
+  }
+
+  const rows = students.map(s => {
+    const existing = existingByStudentId[s.id];
+    const present = existing ? existing.present : true;
+    const remark = existing ? (existing.remark || '') : '';
+    return `
+    <tr data-student-id="${s.id}">
+      <td class="roll">#${s.rollNo ?? '—'}</td>
+      <td>${s.name ?? '—'}</td>
+      <td>${s.studentClass ?? '—'}</td>
+      <td>
+        <label class="present-toggle ${present ? 'is-present' : 'is-absent'}">
+          <input type="checkbox" class="present-check" ${present ? 'checked' : ''}>
+          <span class="present-label">${present ? 'Present' : 'Absent'}</span>
+        </label>
+      </td>
+      <td><input type="text" class="remark-input" value="${remark.replace(/"/g,'&quot;')}" placeholder="optional remark"></td>
+    </tr>`;
+  }).join('');
+
+  host.innerHTML = `<div class="table-wrap"><table>
+    <thead><tr><th>Roll</th><th>Name</th><th>Class</th><th>Status</th><th>Remark</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>`;
+
+  host.querySelectorAll('.present-toggle').forEach(label => {
+    const checkbox = label.querySelector('.present-check');
+    const span = label.querySelector('.present-label');
+    checkbox.addEventListener('change', () => {
+      label.classList.toggle('is-present', checkbox.checked);
+      label.classList.toggle('is-absent', !checkbox.checked);
+      span.textContent = checkbox.checked ? 'Present' : 'Absent';
+    });
+  });
+}
+
+$('daily-save').addEventListener('click', async () => {
+  const date = $('daily-date').value;
+  const rows = document.querySelectorAll('#daily-host tr[data-student-id]');
+  if(rows.length === 0){ alert('Load the class first.'); return; }
+
+  const records = Array.from(rows).map(row => ({
+    studentId: Number(row.dataset.studentId),
+    present: row.querySelector('.present-check').checked,
+    remark: row.querySelector('.remark-input').value || null
+  }));
+
+  await request('daily', {
+    method:'POST',
+    url: `${attendanceUrl()}/bulk`,
+    body: { attendanceDate: date, records }
+  });
+});
+
+// ================= 02 HISTORY =================
+$('hist-load').addEventListener('click', async () => {
+  const id = $('hist-id').value;
+  if(!id){ alert('Enter a student ID first.'); return; }
+  const r = await request('hist', {method:'GET', url: `${attendanceUrl()}/student/${id}`});
+  if(r.ok) renderHistoryTable(r.data);
+});
+
+function renderHistoryTable(list){
+  const host = $('hist-host');
+  if(!Array.isArray(list) || list.length === 0){
+    host.innerHTML = '<div class="empty-state"><strong>No attendance records</strong>Nothing has been marked for this student yet.</div>';
+    return;
+  }
+  const rows = list.map(r => `
+    <tr>
+      <td class="roll">${r.id}</td>
+      <td>${r.attendanceDate ?? '—'}</td>
+      <td>${r.present ? '<span class="badge good">Present</span>' : '<span class="badge bad">Absent</span>'}</td>
+      <td>${r.remark ?? '—'}</td>
+    </tr>`).join('');
+  host.innerHTML = `<div class="table-wrap"><table>
+    <thead><tr><th>Record ID</th><th>Date</th><th>Status</th><th>Remark</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>`;
+}
+
+$('hist-summary').addEventListener('click', async () => {
+  const id = $('hist-id').value;
+  if(!id){ alert('Enter a student ID first.'); return; }
+  const r = await request('hist', {method:'GET', url: `${attendanceUrl()}/student/${id}/summary`});
+  if(r.ok) renderStats(r.data);
+});
+
+function renderStats(summary){
+  const host = $('hist-stats');
+  host.innerHTML = `<div class="stat-cards">
+    <div class="stat-card"><div class="label">Total marked</div><div class="value">${summary.totalDaysMarked}</div></div>
+    <div class="stat-card"><div class="label">Present</div><div class="value good">${summary.presentDays}</div></div>
+    <div class="stat-card"><div class="label">Absent</div><div class="value bad">${summary.absentDays}</div></div>
+    <div class="stat-card"><div class="label">Attendance %</div><div class="value gold">${summary.attendancePercentage}%</div></div>
+  </div>`;
+}
+
+// ================= 03 EDIT / DELETE =================
+const editToggle = $('edit-toggle');
+const editPresentCheckbox = $('edit-present');
+const editToggleLabel = $('edit-toggle-label');
+editPresentCheckbox.addEventListener('change', () => {
+  editToggle.classList.toggle('is-present', editPresentCheckbox.checked);
+  editToggle.classList.toggle('is-absent', !editPresentCheckbox.checked);
+  editToggleLabel.textContent = editPresentCheckbox.checked ? 'Present' : 'Absent';
+});
+
+$('edit-submit').addEventListener('click', async () => {
+  const id = $('edit-id').value;
+  if(!id){ alert('Enter an attendance record ID first.'); return; }
+  const body = {
+    present: editPresentCheckbox.checked,
+    remark: $('edit-remark').value || null
+  };
+  await request('edit', {method:'PUT', url: `${attendanceUrl()}/${id}`, body});
+});
+
+$('edit-delete').addEventListener('click', async () => {
+  const id = $('edit-id').value;
+  if(!id){ alert('Enter an attendance record ID first.'); return; }
+  if(!confirm(`Permanently delete attendance record #${id}?`)) return;
+  await request('edit', {method:'DELETE', url: `${attendanceUrl()}/${id}`});
+});
+
+// initial ping
+window.addEventListener('load', ()=>{
+  fetch(studentsUrl()).then(()=>markConn(true)).catch(()=>markConn(false));
+});
+</script>
+</body>
+</html>
